@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title th:text="${title}">Secure Messaging System - UEM 2025</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS (se você tiver um custom.css global, ele será carregado) -->
+    <!-- <link href="/css/custom.css" rel="stylesheet"> -->
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .hero-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            backdrop-filter: blur(5px);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .crypto-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+        
+        .device-info {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .btn-custom {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #28a745;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .mobile-optimized {
+            padding: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2rem;
+            }
+            
+            .feature-card {
+                margin-bottom: 1rem;
+            }
+            
+            .crypto-icon {
+                font-size: 2rem;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.2);">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shield-lock"></i>
+                Secure Messaging
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/help">
+                            <i class="bi bi-question-circle"></i> Ajuda
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">
+                            <i class="bi bi-box-arrow-in-right"></i> Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard"> <!-- Alterado para /dashboard -->
+                            <i class="bi bi-chat-dots"></i> Chat
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="container my-5">
+        <div class="hero-section p-5 text-center text-white">
+            <div class="row align-items-center">
+                <div class="col-lg-8 mx-auto">
+                    <i class="bi bi-shield-lock-fill" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+                    <h1 class="display-4 fw-bold mb-3">Sistema de Mensagens Seguras</h1>
+                    <p class="lead mb-4">
+                        Comunicação criptografada com técnicas avançadas de segurança
+                        <br>
+                        <small>Laboratório de Segurança de Redes - UEM 2025</small>
+                    </p>
+                    
+                    <!-- Device Info -->
+                    <div class="device-info p-3 mb-4">
+                        <div class="row text-start">
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <i class="bi bi-device-ssd"></i>
+                                    <strong>Dispositivo:</strong> 
+                                    <span th:text="${isMobile} ? 'Mobile/Tablet' : 'Desktop'"></span>
+                                </p>
+                                <p class="mb-1">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <strong>IP Cliente:</strong> 
+                                    <code th:text="${clientIP}"></code>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <span class="status-indicator"></span>
+                                    <strong>Status:</strong> Online
+                                </p>
+                                <p class="mb-1">
+                                    <i class="bi bi-clock"></i>
+                                    <strong>Servidor:</strong> 
+                                    <span th:text="${#temporals.format(serverTime, 'HH:mm:ss')}"></span>
+                                </p>
+                            </div>
+                            <div class="col-12 mt-2">
+                                <div id="networkInfo" class="alert alert-info" style="display: none; font-size: 0.9rem;">
+                                    <strong>📱 Acesso via Celular:</strong>
+                                    <div id="mobileUrls"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="/login" class="btn btn-custom btn-lg me-md-2">
+                            <i class="bi bi-box-arrow-in-right"></i> Fazer Login
+                        </a>
+                        <a href="/register" class="btn btn-outline-light btn-lg me-md-2">
+                            <i class="bi bi-person-plus"></i> Criar Conta
+                        </a>
+                        <button type="button" class="btn btn-outline-light btn-lg" onclick="testCrypto()">
+                            <i class="bi bi-gear"></i> Testar Criptografia
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="container my-5">
+        <h2 class="text-center text-white mb-5 fw-bold">Recursos de Segurança Implementados</h2>
+        
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card card h-100 text-center p-4">
+                    <i class="bi bi-key crypto-icon"></i>
+                    <h5 class="card-title">RSA 1024 bits</h5>
+                    <p class="card-text">Criptografia assimétrica para troca segura de chaves e assinaturas digitais.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card card h-100 text-center p-4">
+                    <i class="bi bi-arrow-left-right crypto-icon"></i>
+                    <h5 class="card-title">Diffie-Hellman</h5>
+                    <p class="card-text">Acordo seguro de chaves com PRNG 128 bits entre múltiplas partes.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card card h-100 text-center p-4">
+                    <i class="bi bi-hash crypto-icon"></i>
+                    <h5 class="card-title">SHA-256/SHA-3</h5>
+                    <p class="card-text">Funções hash criptográficas para verificação de integridade das mensagens.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card card h-100 text-center p-4">
+                    <i class="bi bi-award crypto-icon"></i>
+                    <h5 class="card-title">PKI & Certificados</h5>
+                    <p class="card-text">Infraestrutura de chave pública com certificados digitais autoassinados.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Results Modal -->
+    <div class="modal fade" id="testModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-gear"></i> Resultado dos Testes Criptográficos
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="testResults">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Testando...</span>
+                            </div>
+                            <p class="mt-3">Executando testes criptográficos...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5 py-4" style="background: rgba(0,0,0,0.2);">
+        <div class="container">
+            <div class="row text-white">
+                <div class="col-md-6">
+                    <h5>Secure Messaging System</h5>
+                    <p class="mb-0">Desenvolvido para Laboratório de Segurança de Redes</p>
+                    <small>Universidade Eduardo Mondlane - 2025</small>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">
+                        <i class="bi bi-shield-check"></i> 
+                        Segurança Garantida por Bouncy Castle
+                    </p>
+                    <small>Versão <span th:text="${version ?: '1.0.0'}"></span></small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Função para testar criptografia
+        async function testCrypto() {
+            const modal = new bootstrap.Modal(document.getElementById('testModal'));
+            modal.show();
+            
+            const resultsDiv = document.getElementById('testResults');
+            
+            try {
+                // Teste RSA
+                const rsaResponse = await fetch('/api/public/test-rsa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: 'Teste do Sistema de Mensagens Seguras!' })
+                });
+                const rsaResult = await rsaResponse.json();
+                
+                // Teste Diffie-Hellman
+                const dhResponse = await fetch('/api/public/test-dh', { method: 'POST' });
+                const dhResult = await dhResponse.json();
+                
+                // Exibir resultados
+                resultsDiv.innerHTML = `
+                    <div class="accordion" id="testAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#rsaCollapse">
+                                    <i class="bi bi-key me-2"></i>
+                                    Teste RSA ${rsaResult.success ? '✅' : '❌'}
+                                </button>
+                            </h2>
+                            <div id="rsaCollapse" class="accordion-collapse collapse show">
+                                <div class="accordion-body">
+                                    <p><strong>Mensagem Original:</strong> ${rsaResult.originalMessage}</p>
+                                    <p><strong>Criptografado:</strong> <code>${rsaResult.encryptedMessage.substring(0,50)}...</code></p>
+                                    <p><strong>Descriptografado:</strong> ${rsaResult.decryptedMessage}</p>
+                                    <p><strong>Assinatura Válida:</strong> 
+                                        <span class="badge ${rsaResult.signatureValid ? 'bg-success' : 'bg-danger'}">
+                                            ${rsaResult.signatureValid ? 'SIM' : 'NÃO'}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#dhCollapse">
+                                    <i class="bi bi-arrow-left-right me-2"></i>
+                                    Teste Diffie-Hellman ${dhResult.success ? '✅' : '❌'}
+                                </button>
+                            </h2>
+                            <div id="dhCollapse" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <p><strong>Chave de Alice:</strong> <code>${dhResult.aliceKey.substring(0,30)}...</code></p>
+                                    <p><strong>Chave de Bob:</strong> <code>${dhResult.bobKey.substring(0,30)}...</code></p>
+                                    <p><strong>Chaves Coincidem:</strong> 
+                                        <span class="badge ${dhResult.keysMatch ? 'bg-success' : 'bg-danger'}">
+                                            ${dhResult.keysMatch ? 'SIM' : 'NÃO'}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Erro nos testes:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Carregar informações do sistema ao inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔐 Secure Messaging System inicializado');
+            console.log('📱 Dispositivo detectado:', /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop');
+            
+            // Carregar informações de rede
+            loadNetworkInfo();
+        });
+        
+        // Carregar informações de rede
+        async function loadNetworkInfo() {
+            try {
+                const response = await fetch('/api/public/device-info');
+                const data = await response.json();
+                
+                if (data.accessUrls && data.serverIP !== 'localhost') {
+                    const networkDiv = document.getElementById('networkInfo');
+                    const urlsDiv = document.getElementById('mobileUrls');
+                    
+                    urlsDiv.innerHTML = `
+                        <div class="mt-2">
+                            <strong>💻 PC/Notebook:</strong> <code>${data.accessUrls.pc}</code><br>
+                            <strong>📱 Celular/Tablet:</strong> <code>${data.accessUrls.mobile}</code><br>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i>
+                                Conecte o celular na mesma WiFi e acesse o IP acima
+                            </small>
+                        </div>
+                    `;
+                    
+                    networkDiv.style.display = 'block';
+                }
+                
+                // Mostrar dicas de acesso via rede local se apropriado
+                showNetworkAccessInfo(data);
+                
+            } catch (error) {
+                console.warn('⚠️ Não foi possível carregar info de rede:', error);
+            }
+        }
+        
+        // Mostrar informações de acesso via rede
+        function showNetworkAccessInfo(deviceInfo) {
+            const hostname = window.location.hostname;
+            const isLocalIP = hostname !== 'localhost' && hostname !== '127.0.0.1';
+            
+            if (isLocalIP && deviceInfo) {
+                // Usuário está acessando via rede local (celular provavelmente)
+                console.log('📱 Acesso via rede local detectado:', hostname);
+                
+                // Mostrar notificação de sucesso
+                setTimeout(() => {
+                    const notification = document.createElement('div');
+                    notification.className = 'alert alert-success alert-dismissible position-fixed';
+                    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 350px; animation: slideIn 0.5s ease;';
+                    notification.innerHTML = `
+                        <i class="bi bi-check-circle"></i>
+                        <strong>Conectado via rede local! ✅</strong><br>
+                        <small>
+                            IP: <code>${hostname}</code><br>
+                            Você pode criar contas e conversar com outros dispositivos na mesma WiFi!
+                        </small>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    document.body.appendChild(notification);
+                    
+                    // Auto-remover após 10 segundos
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.remove();
+                        }
+                    }, 10000);
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>

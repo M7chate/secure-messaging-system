@@ -1,0 +1,1174 @@
+<!-- 5. chat/index.html - Interface de Chat -->
+<!DOCTYPE html>
+<html lang="pt" xmlns:th="http://www.thymeleaf.org" layout:decorate="~{layout}">
+<head>
+    <title th:text="'Chat com ' + ${recipient.username} + ' - SecureMessage'">Chat - SecureMessage</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .crypto-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .message-bubble {
+            max-width: 85%;
+            border-radius: 18px;
+            padding: 12px 18px;
+            margin-bottom: 12px;
+            position: relative;
+            animation: fadeInUp 0.3s ease;
+            word-wrap: break-word;
+        }
+        
+        .message-sent {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .message-received {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            margin-right: auto;
+        }
+        
+        .online-indicator {
+            width: 12px;
+            height: 12px;
+            background: #27ae60;
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+        }
+        
+        .online-indicator::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 2px solid #27ae60;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        
+        @keyframes ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .sidebar {
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .user-card {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .user-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .crypto-info {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        /* Responsividade - Mobile First */
+        @media (max-width: 767.98px) {
+            body { font-size: 16px; }
+            .crypto-card { border-radius: 12px; margin: 10px; }
+            .auth-container { padding: 20px !important; margin: 20px !important; max-width: 100% !important; }
+            .auth-title { font-size: 2.2rem !important; }
+            .auth-subtitle { font-size: 1.1rem !important; }
+            .form-control { padding: 15px !important; font-size: 16px !important; border-radius: 8px !important; }
+            .btn { padding: 15px !important; font-size: 18px !important; border-radius: 8px !important; }
+            .sidebar { position: fixed; top: 0; left: -100%; width: 280px; height: 100vh; z-index: 1050; transition: left 0.3s ease; padding-top: 60px; }
+            .sidebar.show { left: 0; }
+            .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1040; display: none; }
+            .sidebar-overlay.show { display: block; }
+            .mobile-header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px); z-index: 1030; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+            .main-content-mobile { padding-top: 60px; height: 100vh; }
+            .user-card { padding: 16px; margin-bottom: 12px; }
+            .user-card .bi-person-circle { font-size: 2.2rem !important; }
+            .online-indicator { width: 14px; height: 14px; }
+            .chat-container { height: 100vh; display: flex; flex-direction: column; }
+            .chat-header { height: 70px; min-height: 70px; padding: 15px; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+            .chat-messages { flex: 1; overflow-y: auto; padding: 15px; -webkit-overflow-scrolling: touch; }
+            .chat-input { height: 80px; min-height: 80px; padding: 15px; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px); border-top: 1px solid rgba(255, 255, 255, 0.1); }
+            .message-bubble { max-width: 85%; padding: 15px 18px; margin-bottom: 15px; font-size: 16px; }
+            .navbar-brand { font-size: 1.4rem !important; }
+            .navbar .bi { font-size: 1.3rem !important; }
+        }
+        
+        @media (min-width: 768px) and (max-width: 991.98px) {
+            .crypto-card { margin: 15px; }
+            .message-bubble { max-width: 75%; }
+            .sidebar { width: 280px; }
+            .main-content { margin-left: 280px; }
+        }
+        
+        @media (min-width: 992px) {
+            .chat-container-desktop { max-width: 1400px; margin: 0 auto; height: calc(100vh - 76px); }
+            .dashboard-container { max-width: 1600px; margin: 0 auto; }
+            .auth-container-desktop { max-width: 450px; margin: 0 auto; }
+            .message-bubble { max-width: 65%; }
+            .sidebar { width: 320px; }
+            .crypto-card { margin: 20px; }
+            .user-card { padding: 12px; }
+        }
+        
+        @media (min-width: 1200px) {
+            .chat-container-desktop { max-width: 1600px; }
+            .dashboard-container { max-width: 1800px; }
+            .message-bubble { max-width: 60%; }
+        }
+        
+        .form-control:focus { box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important; border-color: rgba(102, 126, 234, 0.5) !important; }
+        .text-mobile { font-size: 16px !important; }
+        .btn-mobile { min-height: 48px; padding: 12px 20px; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.5); }
+
+        /* Estilos adicionais para modals crypto */
+        .modal-body .text-light { color: #f8f9fa !important; }
+        .font-monospace { font-family: 'Courier New', monospace; }
+        @media (max-width: 768px) { .modal-dialog { margin: 10px; } .modal-xl { max-width: 95%; } }
+    </style>
+    
+    <th:block layout:fragment="extra-css"></th:block>
+</head>
+<body>
+    <main layout:fragment="content" class="container-fluid p-0">
+        <div class="row g-0" style="height: calc(100vh - 76px);">
+            <!-- Chat Header -->
+            <div class="col-12" style="height: 60px; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px);">
+                <div class="d-flex align-items-center h-100 px-3">
+                    <a href="/dashboard" class="btn btn-outline-light me-3">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    
+                    <div class="position-relative me-3">
+                        <i class="bi bi-person-circle text-white" style="font-size: 2rem;"></i>
+                        <span class="online-indicator position-absolute bottom-0 end-0"></span>
+                    </div>
+                        
+                    <div class="flex-grow-1">
+                        <h6 class="text-white mb-0" th:text="${recipient.username}">Username</h6>
+                        <small class="crypto-info">
+                            <i class="bi bi-shield-check me-1"></i>
+                            Conexão criptografada • RSA-1024 + AES-256
+                        </small>
+                    </div>
+                    
+                    <div class="text-end">
+                        <button class="btn btn-outline-light btn-sm me-2" onclick="showDHKeyExchange()">
+                            <i class="bi bi-key"></i> DH
+                        </button>
+                        <button class="btn btn-outline-light btn-sm me-2" onclick="testCrypto()">
+                            <i class="bi bi-gear"></i> Testar Crypto
+                        </button>
+                        <button class="btn btn-outline-light btn-sm me-2" onclick="showCryptoInfo()">
+                            <i class="bi bi-info-circle"></i> Info
+                        </button>
+                        <button class="btn btn-outline-light btn-sm" onclick="clearChat()">
+                            <i class="bi bi-trash"></i> Limpar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Messages Area -->
+            <div class="col-12" style="height: calc(100vh - 200px); overflow-y: auto;" id="messagesContainer">
+                <div class="p-3" id="messagesList">
+                    <div th:each="message : ${messages}" class="d-flex mb-3"
+                         th:classappend="${message.sender.id == currentUser .id} ? 'justify-content-end' : 'justify-content-start'">
+                        
+                        <div class="message-bubble" style="cursor: pointer;"
+                             th:classappend="${message.sender.id == currentUser .id} ? 'message-sent' : 'message-received'"
+                             th:onclick="'showMessageDetails(' + ${message.id} + ')'">
+                            
+                            <!-- Message Content -->
+                            <div th:if="${message.sender.id != currentUser .id}" class="message-content"
+                                 th:text="${decryptedMessages.get(message.id)}">Conteúdo da mensagem</div>
+                            
+                            <div th:if="${message.sender.id == currentUser .id}" class="message-content">
+                                <span class="text-white-50" style="font-size: 0.8rem;">Você:</span><br>
+                                <span th:text="${message.content}">Mensagem enviada (criptografada)</span>
+                            </div>
+                            
+                            <!-- Message Info -->
+                            <div class="d-flex justify-content-between align-items-center mt-2" style="font-size: 0.7rem;">
+                                <span th:text="${#temporals.format(message.sentAt, 'HH:mm')}">10:30</span>
+                                
+                                <div>
+                                    <i class="bi bi-shield-check" title="Assinatura verificada"></i>
+                                    <i th:if="${message.sender.id == currentUser .id}" 
+                                       class="bi bi-check2-all" th:classappend="${message.isRead} ? 'text-info' : 'text-muted'"
+                                       title="Entregue"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Message Input -->
+            <div class="col-12" style="height: 64px; background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(10px);">
+                <div class="d-flex align-items-center h-100 px-3">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="messageInput" placeholder="Digite sua mensagem..."
+                               style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: white;"
+                               onkeypress="if(event.key==='Enter') sendMessage(event)">
+                        
+                        <button class="btn btn-outline-light" type="button" onclick="sendMessage(event)">
+                            <i class="bi bi-send"></i>
+                        </button>
+                        
+                        <button class="btn btn-outline-light" type="button" onclick="attachFile()">
+                            <i class="bi bi-paperclip"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+                        <!-- Message Details Modal (Continuação e Completo) -->
+            <div class="modal fade" id="messageDetailsModal" tabindex="-1">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content" style="background: rgba(0, 0, 0, 0.9); border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <div class="modal-header bg-dark text-white">
+                            <h5 class="modal-title">
+                                <i class="bi bi-file-text me-2"></i>Detalhes da Mensagem Criptográfica
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-info">Informações da Mensagem</h6>
+                                    <div class="crypto-card p-3 mb-3" style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; border-left: 4px solid #17a2b8;">
+                                        <div class="mb-2">
+                                            <strong class="text-light">ID:</strong> 
+                                            <span class="text-white-50" id="msgId">Carregando...</span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong class="text-light">Remetente:</strong> 
+                                            <span class="text-white-50" id="msgSender">Carregando...</span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong class="text-light">Destinatário:</strong> 
+                                            <span class="text-white-50" id="msgReceiver">Carregando...</span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong class="text-light">Enviado em:</strong> 
+                                            <span class="text-white-50" id="msgSentAt">Carregando...</span>
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong class="text-light">Status:</strong> 
+                                            <span id="msgStatus" class="badge bg-secondary">Carregando...</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <h6 class="text-success">Verificações de Segurança</h6>
+                                    <div class="crypto-card p-3" style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; border-left: 4px solid #28a745;">
+                                        <div class="mb-2" id="hashVerification">
+                                            <i class="bi bi-shield-check text-success me-2"></i>
+                                            <span class="text-light">Verificação de Hash: </span>
+                                            <span id="hashStatus" class="badge bg-secondary">Carregando...</span>
+                                        </div>
+                                        <div id="signatureVerification">
+                                            <i class="bi bi-key text-info me-2"></i>
+                                            <span class="text-light">Assinatura Digital: </span>
+                                            <span id="signatureStatus" class="badge bg-secondary">Carregando...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Conteúdo Original (Descriptografado)</h6>
+                                    <div class="crypto-card p-3 mb-3" style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; border-left: 4px solid #ffc107; max-height: 120px; overflow-y: auto;">
+                                        <small class="text-light font-monospace" style="word-break: break-all;" id="originalContent">Carregando...</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-12">
+                                    <h6 class="text-danger">Conteúdo Criptografado (AES-256)</h6>
+                                    <div class="crypto-card p-3 mb-3" style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; border-left: 4px solid #dc3545; max-height: 100px; overflow-y: auto;">
+                                        <small class="text-light font-monospace" style="word-break: break-all;" id="encryptedContent">Carregando...</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-12">
+                                    <h6 class="text-primary">Chave AES Criptografada (RSA Pública do Destinatário)</h6>
+                                    <div class="crypto-card p-3 mb-3" style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; border-left: 4px solid #007bff; max-height: 100px; overflow-y: auto;">
+                                        <small class="text-light font-monospace" style="word-break: break-all;" id="encryptedKey">Carregando...</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">Hash SHA-256 da Mensagem (Integridade)</h6>
+                                    <div class="crypto-card p-3" style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; border-left: 4px solid #007bff; max-height: 80px; overflow-y: auto;">
+                                        <small class="text-light font-monospace" style="word-break: break-all;" id="contentHash">Carregando...</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h6 class="text-secondary">Assinatura Digital (RSA - Autenticidade)</h6>
+                                    <div class="crypto-card p-3" style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; border-left: 4px solid #6c757d; max-height: 80px; overflow-y: auto;">
+                                        <small class="text-light font-monospace" style="word-break: break-all;" id="digitalSignature">Carregando...</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="alert alert-success" role="alert" style="background: rgba(40, 167, 69, 0.2); border: 1px solid rgba(40, 167, 69, 0.5);">
+                                        <h6 class="mb-2 text-success">
+                                            <i class="bi bi-info-circle me-2"></i>Processo de Criptografia Híbrida (PGP-like)
+                                        </h6>
+                                        <ol class="mb-0 small text-light">
+                                            <li><strong>Assinatura:</strong> Mensagem original assinada com chave RSA privada do remetente (autenticidade).</li>
+                                            <li><strong>Chave Simétrica:</strong> Gera chave AES-256 aleatória para esta mensagem (eficiência).</li>
+                                            <li><strong>Criptografia:</strong> Mensagem cifrada com AES-256 (rápida para texto longo).</li>
+                                            <li><strong>Proteção da Chave:</strong> Chave AES cifrada com RSA pública do destinatário (confidencialidade).</li>
+                                            <li><strong>Integridade:</strong> Hash SHA-256 da original para verificar alterações.</li>
+                                        </ol>
+                                        <div class="mt-2 small text-muted">
+                                            <i class="bi bi-lock-fill me-1"></i> End-to-End: Apenas remetente e destinatário podem ler.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-dark">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                            <button type="button" class="btn btn-info" onclick="copyToClipboard('encryptedContent')">
+                                <i class="bi bi-copy"></i> Copiar Cifrada
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DH Key Exchange Modal -->
+            <div class="modal fade" id="dhKeyExchangeModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content" style="background: rgba(0, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <div class="modal-header bg-info text-white">
+                            <h5 class="modal-title">
+                                <i class="bi bi-key me-2"></i>Acordo de Chaves Diffie-Hellman (DH)
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-info">Suas Chaves (Públicas - Trocadas com Segurança)</h6>
+                                    <div class="crypto-card p-2 mb-3" style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; border-left: 4px solid #17a2b8; max-height: 150px; overflow-y: auto;">
+                                        <div class="mb-2">
+                                            <strong class="text-light">DH Pública:</strong>
+                                            <small class="text-light font-monospace d-block" style="word-break: break-all;" id="currentUser DHKey">Carregando...</small>
+                                        </div>
+                                        <div>
+                                            <strong class="text-light">RSA Pública (Truncada):</strong>
+                                            <small class="text-light font-monospace d-block" style="word-break: break-all;" id="currentUser RSAKey">Carregando...</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-warning">Chaves do Destinatário (Públicas - Recebidas)</h6>
+                                    <div class="crypto-card p-2 mb-3" style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; border-left: 4px solid #ffc107; max-height: 150px; overflow-y: auto;">
+                                        <div class="mb-2">
+                                            <strong class="text-light">DH Pública:</strong>
+                                            <small class="text-light font-monospace d-block" style="word-break: break-all;" id="recipientDHKey">Carregando...</small>
+                                        </div>
+                                        <div>
+                                            <strong class="text-light">RSA Pública (Truncada):</strong>
+                                            <small class="text-light font-monospace d-block" style="word-break: break-all;" id="recipientRSAKey">Carregando...</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h6 class="text-success">Chave Compartilhada DH Calculada</h6>
+                                    <div class="crypto-card p-3" style="background: rgba(255, 255, 255, 0.1); border-radius: 10px; border-left: 4px solid #28a745;">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                            <strong class="text-success" id="keyExchangeStatus">Acordo de chaves estabelecido!</strong>
+                                        </div>
+                                        <div class="text-light font-monospace" style="word-break: break-all; font-size: 0.8rem;" id="sharedDHKey">Carregando...</div>
+                                    </div>
+                                    
+                                    <div class="alert alert-info mt-3" role="alert" style="background: rgba(23, 162, 184, 0.2); border: 1px solid rgba(23, 162, 184, 0.5);">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>Como funciona:</strong> Ambos os usuários calculam a mesma chave compartilhada usando suas chaves privadas DH e as chaves públicas DH um do outro, sem nunca trocar as chaves privadas. Essa chave é usada para derivar chaves AES seguras para mensagens futuras.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="alert alert-warning" role="alert">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        <strong>Segurança:</strong> Chaves privadas nunca saem do dispositivo. O acordo DH resiste a ataques Man-in-the-Middle se chaves públicas forem trocadas via canal seguro (ex: TLS/HTTPS).
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-dark">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                            <button type="button" class="btn btn-success" onclick="copyToClipboard('sharedDHKey')">
+                                <i class="bi bi-copy"></i> Copiar Chave Compartilhada
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crypto Test Modal -->
+            <div class="modal fade" id="cryptoTestModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content" style="background: rgba(0, 0, 0, 0.9); border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">
+                                <i class="bi bi-gear me-2"></i>Testes Criptográficos Completos
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="cryptoTestResults">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Executando testes...</span>
+                                    </div>
+                                    <p class="mt-3 text-light">Executando testes de RSA, DH, Hash e PGP...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-dark">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                            <button type="button" class="btn btn-primary" onclick="testCrypto()">
+                                <i class="bi bi-arrow-clockwise"></i> Executar Novamente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crypto Info Modal (Original Mantido) -->
+            <div class="modal fade" id="cryptoInfoModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content" style="background: rgba(0, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <div class="modal-header">
+                            <h5 class="modal-title text-white">
+                                <i class="bi bi-shield-lock me-2"></i>Informações de Segurança
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-info">Criptografia Ativa</h6>
+                                                                        <ul class="list-unstyled text-light">
+                                        <li><i class="bi bi-check-circle text-success me-2"></i>RSA-1024 para troca de chaves</li>
+                                        <li><i class="bi bi-check-circle text-success me-2"></i>AES-256 para conteúdo</li>
+                                        <li><i class="bi bi-check-circle text-success me-2"></i>SHA-256 para integridade</li>
+                                        <li><i class="bi bi-check-circle text-success me-2"></i>Assinatura digital ativa</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-info">Status da Conexão</h6>
+                                    <ul class="list-unstyled text-light">
+                                        <li><i class="bi bi-shield-check text-success me-2"></i>Certificado verificado</li>
+                                        <li><i class="bi bi-shield-check text-success me-2"></i>Chaves DH trocadas</li>
+                                        <li><i class="bi bi-shield-check text-success me-2"></i>Canal seguro estabelecido</li>
+                                        <li><i class="bi bi-wifi text-success me-2"></i>Conexão criptografada</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-dark">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Modal (Opcional - Para Ajuda Geral) -->
+            <div class="modal fade" id="helpModal" tabindex="-1">
+                <div class="modal-dialog modal-md">
+                    <div class="modal-content" style="background: rgba(0, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <div class="modal-header bg-secondary text-white">
+                            <h5 class="modal-title">
+                                <i class="bi bi-question-circle me-2"></i>Ajuda - Chat Seguro
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-light">
+                            <h6>Como Usar:</h6>
+                            <ul class="small">
+                                <li><strong>Enviar Mensagem:</strong> Digite no input e pressione Enter ou clique "Enviar". Mensagens são cifradas automaticamente (RSA + AES).</li>
+                                <li><strong>Ver Detalhes:</strong> Clique em uma bolha de mensagem para ver conteúdo cifrado, hash e assinatura.</li>
+                                <li><strong>Chaves DH:</strong> Clique no botão "DH" para ver o acordo de chaves compartilhadas.</li>
+                                <li><strong>Testar Crypto:</strong> Use o botão para validar RSA, DH, Hash e PGP no backend.</li>
+                                <li><strong>Segurança:</strong> Todas as mensagens usam criptografia end-to-end. Chaves são geradas no registro.</li>
+                            </ul>
+                            <hr>
+                            <small class="text-muted">Se houver erros, verifique o console (F12) ou logs do servidor.</small>
+                        </div>
+                        <div class="modal-footer bg-dark">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden file input -->
+            <input type="file" id="fileInput" style="display: none;" accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.mp4,.mp3,.xlsx,.pptx" onchange="handleFileSelect(this)">
+        </main>
+            <th:block layout:fragment="extra-js">
+        <script th:inline="javascript">
+            let stompClient = null;
+            let currentUserId = /*[[${currentUser .id}]]*/ 0;
+            let recipientId = /*[[${recipient.id}]]*/ 0;
+            let currentUsername = /*[[${currentUser .username}]]*/ '';
+            let recipientUsername = /*[[${recipient.username}]]*/ '';
+            
+            // Função auxiliar para copiar texto (usada nos modals)
+            function copyToClipboard(elementId) {
+                const element = document.getElementById(elementId);
+                if (element && element.textContent !== 'Carregando...') {
+                    navigator.clipboard.writeText(element.textContent).then(() => {
+                        alert('Copiado para a área de transferência!');
+                    }).catch(err => {
+                        console.error('Erro ao copiar:', err);
+                        // Fallback: seleciona e copia manualmente
+                        const range = document.createRange();
+                        range.selectNode(element);
+                        window.getSelection().addRange(range);
+                        document.execCommand('copy');
+                        window.getSelection().removeAllRanges();
+                        alert('Copiado (fallback)!');
+                    });
+                } else {
+                    alert('Nada para copiar (carregando ou vazio).');
+                }
+            }
+            
+            function connect() {
+                const socket = new SockJS('/ws');
+                stompClient = Stomp.over(socket);
+                
+                stompClient.connect({}, function(frame) {
+                    console.log('Connected: ' + frame);
+                    
+                    // Subscribe to personal message queue
+                    stompClient.subscribe('/user/queue/messages', function(messageOutput) {
+                        const message = JSON.parse(messageOutput.body);
+                        if (message.senderId == recipientId) {
+                            displayReceivedMessage(message);
+                        }
+                    });
+                }, function(error) {
+                    console.error('Erro na conexão WebSocket:', error);
+                    // Reconexão automática após 5s
+                    setTimeout(connect, 5000);
+                });
+            }
+            
+            function sendMessage(event) {
+                if (event) event.preventDefault();
+                const messageInput = document.getElementById('messageInput');
+                const content = messageInput.value.trim();
+                
+                if (content && stompClient) {
+                    const message = {
+                        recipientId: recipientId,
+                        content: content,
+                        type: 'TEXT'
+                    };
+                    
+                    stompClient.send('/app/chat.sendMessage', {}, JSON.stringify(message));
+                    
+                    // Display sent message immediately
+                    displaySentMessage(content);
+                    messageInput.value = '';
+                }
+            }
+            
+            function displaySentMessage(content) {
+                const messagesList = document.getElementById('messagesList');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'd-flex mb-3 justify-content-end';
+                messageDiv.innerHTML = `
+                    <div class="message-bubble message-sent" style="cursor: pointer;" onclick="showMessageDetails(0)">
+                        <div class="message-content">
+                            <span class="text-white-50" style="font-size: 0.8rem;">Você:</span><br>
+                            <span>${content}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2" style="font-size: 0.7rem;">
+                            <span>${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</span>
+                            <div>
+                                <i class="bi bi-shield-check" title="Assinatura verificada"></i>
+                                <i class="bi bi-check2-all text-muted" title="Enviando..."></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                messagesList.appendChild(messageDiv);
+                scrollToBottom();
+            }
+            
+            function displayReceivedMessage(message) {
+                const messagesList = document.getElementById('messagesList');
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'd-flex mb-3 justify-content-start';
+                const onclickStr = `showMessageDetails(${message.id})`;
+                messageDiv.innerHTML = `
+                    <div class="message-bubble message-received" style="cursor: pointer;" onclick="${onclickStr}">
+                        <div class="message-content">${message.content}</div>
+                        <div class="d-flex justify-content-between align-items-center mt-2" style="font-size: 0.7rem;">
+                            <span>${new Date(message.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</span>
+                            <div>
+                                <i class="bi bi-shield-check text-success" title="Assinatura verificada"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                messagesList.appendChild(messageDiv);
+                scrollToBottom();
+            }
+            
+            function scrollToBottom() {
+                const container = document.getElementById('messagesContainer');
+                container.scrollTop = container.scrollHeight;
+            }
+            
+            function showCryptoInfo() {
+                const modal = new bootstrap.Modal(document.getElementById('cryptoInfoModal'));
+                modal.show();
+            }
+            
+            function showDHKeyExchange() {
+                fetch(`/api/chat/keyExchange/${recipientId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // IDs corrigidos sem espaços
+                            document.getElementById('currentUser DHKey').textContent = data.currentUser .dhPublicKey || 'N/A';
+                            document.getElementById('currentUser RSAKey').textContent = (data.currentUser .rsaPublicKey || '').substring(0, 50) + '...';
+                            document.getElementById('recipientDHKey').textContent = data.recipient.dhPublicKey || 'N/A';
+                            document.getElementById('recipientRSAKey').textContent = (data.recipient.rsaPublicKey || '').substring(0, 50) + '...';
+                            document.getElementById('sharedDHKey').textContent = data.dhSharedKey || 'N/A';
+                            document.getElementById('keyExchangeStatus').textContent = data.status || 'Acordo estabelecido!';
+                            
+                            const modal = new bootstrap.Modal(document.getElementById('dhKeyExchangeModal'));
+                            modal.show();
+                        } else {
+                            alert('Erro ao carregar informações de troca de chaves: ' + (data.error || 'Desconhecido'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro no fetch DH:', error);
+                        alert('Erro ao carregar chaves DH. Verifique o backend.');
+                    });
+            }
+            
+            function showMessageDetails(messageId) {
+                fetch(`/api/messages/${messageId}/details`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('msgId').textContent = data.messageId || messageId;
+                            document.getElementById('msgSender').textContent = data.sender || 'N/A';
+                            document.getElementById('msgReceiver').textContent = data.receiver || 'N/A';
+                            document.getElementById('msgSentAt').textContent = new Date(data.sentAt || Date.now()).toLocaleString('pt-BR');
+                            document.getElementById('msgStatus').innerHTML = data.isRead ? 
+                                '<span class="badge bg-success">Lida</span>' : 
+                                '<span class="badge bg-warning">Não lida</span>';
+                            
+                            document.getElementById('originalContent').textContent = data.originalContent || 'N/A';
+                            document.getElementById('encryptedContent').textContent = data.encryptedContent || 'N/A';
+                            document.getElementById('encryptedKey').textContent = data.encryptedSymmetricKey || 'N/A';
+                            document.getElementById('contentHash').textContent = data.contentHash || 'N/A';
+                            document.getElementById('digitalSignature').textContent = data.digitalSignature || 'N/A';
+                            
+                            // Status das verificações
+                            const hashStatus = document.getElementById('hashStatus');
+                            hashStatus.innerHTML = data.hashVerification ? 
+                                '<span class="badge bg-success">Válido ✓</span>' : 
+                                '<span class="badge bg-danger">Inválido ✗</span>';
+                            
+                            const signatureStatus = document.getElementById('signatureStatus');
+                            signatureStatus.innerHTML = data.signatureVerification ? 
+                                '<span class="badge bg-success">Válida ✓</span>' : 
+                                '<span class="badge bg-danger">Inválida ✗</span>';
+                            
+                            const modal = new bootstrap.Modal(document.getElementById('messageDetailsModal'));
+                            modal.show();
+                        } else {
+                            alert('Erro ao carregar detalhes da mensagem: ' + (data.error || 'Desconhecido'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro no fetch detalhes:', error);
+                        alert('Erro ao carregar detalhes da mensagem. Verifique o backend.');
+                    });
+            }
+            
+           function testCrypto() {
+    const modal = new bootstrap.Modal(document.getElementById('cryptoTestModal'));
+    modal.show();
+    
+    const resultsDiv = document.getElementById('cryptoTestResults');
+    resultsDiv.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Executando testes...</span>
+            </div>
+            <p class="mt-3 text-light">Executando testes de RSA, DH, Hash e PGP...</p>
+        </div>
+    `;
+    
+    fetch('/api/crypto/test-all')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let html = '<div class="row">';
+                
+                // Card para RSA
+                html += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card crypto-card ${data.rsa ? 'border-success' : 'border-danger'}">
+                            <div class="card-body">
+                                <h6 class="card-title text-${data.rsa ? 'success' : 'danger'}">
+                                    <i class="bi bi-key ${data.rsa ? 'text-success' : 'text-danger'} me-2"></i>RSA-1024
+                                </h6>
+                                <p class="card-text text-light small">${data.rsa ? '✓ Geração de chaves e assinatura OK' : '✗ Erro na geração de chaves'}</p>
+                                ${data.rsaDetails ? `<small class="text-muted d-block">${data.rsaDetails}</small>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Card para DH (Diffie-Hellman)
+                html += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card crypto-card ${data.dh ? 'border-success' : 'border-danger'}">
+                            <div class="card-body">
+                                <h6 class="card-title text-${data.dh ? 'success' : 'danger'}">
+                                    <i class="bi bi-diagram-3 ${data.dh ? 'text-success' : 'text-danger'} me-2"></i>Diffie-Hellman
+                                </h6>
+                                <p class="card-text text-light small">${data.dh ? '✓ Acordo de chave compartilhada calculado' : '✗ Erro no cálculo da chave compartilhada'}</p>
+                                ${data.dhDetails ? `<small class="text-muted d-block">${data.dhDetails}</small>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Card para Hash (SHA-256)
+                html += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card crypto-card ${data.hash ? 'border-success' : 'border-danger'}">
+                            <div class="card-body">
+                                <h6 class="card-title text-${data.hash ? 'success' : 'danger'}">
+                                    <i class="bi bi-hash ${data.hash ? 'text-success' : 'text-danger'} me-2"></i>SHA-256
+                                </h6>
+                                <p class="card-text text-light small">${data.hash ? '✓ Hash gerado e verificado com integridade' : '✗ Erro na verificação de hash'}</p>
+                                ${data.hashDetails ? `<small class="text-muted d-block">${data.hashDetails}</small>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Card para PGP-like (Criptografia Híbrida RSA + AES)
+                html += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card crypto-card ${data.pgp ? 'border-success' : 'border-danger'}">
+                            <div class="card-body">
+                                <h6 class="card-title text-${data.pgp ? 'success' : 'danger'}">
+                                    <i class="bi bi-lock ${data.pgp ? 'text-success' : 'text-danger'} me-2"></i>PGP Híbrido (RSA + AES-256)
+                                </h6>
+                                <p class="card-text text-light small">${data.pgp ? '✓ Criptografia/Descriptografia e assinatura OK' : '✗ Erro na criptografia híbrida'}</p>
+                                ${data.pgpDetails ? `<small class="text-muted d-block">${data.pgpDetails}</small>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                html += '</div>';
+                
+                // Adiciona um resumo geral no final
+                html += `
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="alert alert-${data.overallSuccess ? 'success' : 'warning'} text-light">
+                                <i class="bi bi-check-circle ${data.overallSuccess ? 'text-success' : 'text-warning'} me-2"></i>
+                                <strong>Resumo:</strong> ${data.overallSuccess ? 'Todos os testes passaram! Sistema criptográfico seguro.' : 'Alguns testes falharam. Verifique o backend.'}
+                                ${data.overallScore ? `<br><small>Score: ${data.overallScore}/4</small>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                resultsDiv.innerHTML = html;
+            } else {
+                resultsDiv.innerHTML = `
+                    <div class="alert alert-danger text-light">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Erro nos testes criptográficos: ${data.error || 'Falha desconhecida no backend'}.
+                        <br><small class="mt-2 d-block">Verifique os logs do servidor ou implemente o endpoint /api/crypto/test-all.</small>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Erro no fetch de testes criptográficos:', error);
+            resultsDiv.innerHTML = `
+                <div class="alert alert-danger text-light">
+                    <i class="bi bi-wifi-off me-2"></i>
+                    Erro na comunicação com o backend: ${error.message || 'Falha na rede ou endpoint não encontrado'}.
+                    <br><small class="mt-2 d-block">Implemente /api/crypto/test-all no seu controller Java para testes reais.</small>
+                </div>
+            `;
+        });
+}
+            
+            function clearChat() {
+                if (confirm('Limpar histórico do chat? Isso não afeta o servidor.')) {
+                    document.getElementById('messagesList').innerHTML = '';
+                    // Opcional: Fetch para limpar no backend se quiser
+                    // fetch(`/api/chat/${recipientId}/clear`, { method: 'POST' });
+                }
+            }
+            
+            function attachFile() {
+                document.getElementById('fileInput').click();
+            }
+            
+            // JavaScript Atualizado para o Chat com Upload/Download de Arquivos
+
+            // SUBSTITUA as seguintes funções no seu chat/index.html:
+
+// 1. Substituir handleFileSelect
+function handleFileSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    // Verificar tamanho
+    if (file.size > 10 * 1024 * 1024) {
+        alert('Arquivo muito grande! Máximo 10MB.');
+        input.value = '';
+        return;
+    }
+    
+    // Mostrar loading
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'd-flex mb-3 justify-content-end';
+    loadingDiv.id = 'uploading-message';
+    loadingDiv.innerHTML = `
+        <div class="message-bubble message-sent">
+            <div class="message-content">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm text-light me-2" role="status"></div>
+                    <span>Enviando ${file.name}...</span>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2" style="font-size: 0.7rem;">
+                <span>${formatFileSize(file.size)}</span>
+                <i class="bi bi-cloud-upload text-info"></i>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('messagesList').appendChild(loadingDiv);
+    scrollToBottom();
+    
+    // Preparar FormData para upload
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Enviar arquivo
+    fetch(`/api/upload/${recipientId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Remover loading
+        document.getElementById('uploading-message')?.remove();
+        
+        if (data.success) {
+            // Mostrar mensagem de arquivo enviado
+            displaySentFile(data.fileName, file.size, file.type, data.messageId);
+        } else {
+            alert('Erro ao enviar arquivo: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erro no upload:', error);
+        document.getElementById('uploading-message')?.remove();
+        alert('Erro ao enviar arquivo. Tente novamente.');
+    })
+    .finally(() => {
+        input.value = '';
+    });
+}
+
+// 2. Adicionar novas funções (adicionar após handleFileSelect)
+function displaySentFile(fileName, fileSize, fileType, messageId) {
+    const messagesList = document.getElementById('messagesList');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'd-flex mb-3 justify-content-end';
+    
+    const isImage = fileType && fileType.startsWith('image/');
+    const icon = isImage ? 'bi-image' : 'bi-file-earmark';
+    const typeLabel = isImage ? 'Imagem' : 'Arquivo';
+    
+    messageDiv.innerHTML = `
+        <div class="message-bubble message-sent" style="cursor: pointer;" onclick="downloadFile(${messageId}, '${fileName}')">
+            <div class="message-content">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="${icon} text-white me-2" style="font-size: 1.2rem;"></i>
+                    <div>
+                        <div class="fw-bold">${typeLabel} Enviado</div>
+                        <small class="text-white-50">${fileName}</small>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <small class="text-white-50">Clique para baixar</small>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2" style="font-size: 0.7rem;">
+                <span>${formatFileSize(fileSize)}</span>
+                <div>
+                    <i class="bi bi-shield-check" title="Criptografado"></i>
+                    <i class="bi bi-check2-all text-info" title="Enviado"></i>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    messagesList.appendChild(messageDiv);
+    scrollToBottom();
+}
+
+function displayReceivedFile(message) {
+    const messagesList = document.getElementById('messagesList');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'd-flex mb-3 justify-content-start';
+    
+    const isImage = message.type === 'IMAGE';
+    const icon = isImage ? 'bi-image' : 'bi-file-earmark';
+    const typeLabel = isImage ? 'Imagem' : 'Arquivo';
+    
+    messageDiv.innerHTML = `
+        <div class="message-bubble message-received" style="cursor: pointer;" onclick="downloadFile(${message.messageId}, '${message.fileName}')">
+            <div class="message-content">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="${icon} text-primary me-2" style="font-size: 1.2rem;"></i>
+                    <div>
+                        <div class="fw-bold">${typeLabel} Recebido</div>
+                        <small class="text-muted">${message.fileName}</small>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); downloadFile(${message.messageId}, '${message.fileName}')">
+                        <i class="bi bi-download me-1"></i>Baixar
+                    </button>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2" style="font-size: 0.7rem;">
+                <span>${formatFileSize(message.fileSize || 0)}</span>
+                <div>
+                    <i class="bi bi-shield-check text-success" title="Assinatura verificada"></i>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    messagesList.appendChild(messageDiv);
+    scrollToBottom();
+}
+
+function downloadFile(messageId, fileName) {
+    const link = document.createElement('a');
+    link.href = `/api/download/${messageId}`;
+    link.download = fileName;
+    link.style.display = 'none';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Toast de feedback
+    const toast = document.createElement('div');
+    toast.className = 'toast position-fixed bottom-0 end-0 m-3';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <div class="toast-header bg-success text-white">
+            <i class="bi bi-download me-2"></i>
+            <strong class="me-auto">Download</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">Baixando: ${fileName}</div>
+    `;
+    
+    document.body.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+    bsToast.show();
+    setTimeout(() => toast.remove(), 4000);
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+// 3. Atualizar displayReceivedMessage (substituir a função existente)
+function displayReceivedMessage(message) {
+    // Verificar se é arquivo/imagem
+    if (message.type === 'FILE' || message.type === 'IMAGE') {
+        displayReceivedFile(message);
+        return;
+    }
+    
+    // Mensagem de texto normal
+    const messagesList = document.getElementById('messagesList');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'd-flex mb-3 justify-content-start';
+    messageDiv.innerHTML = `
+        <div class="message-bubble message-received" style="cursor: pointer;" onclick="showMessageDetails(${message.messageId})">
+            <div class="message-content">${message.content}</div>
+            <div class="d-flex justify-content-between align-items-center mt-2" style="font-size: 0.7rem;">
+                <span>${new Date(message.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</span>
+                <div>
+                    <i class="bi bi-shield-check text-success" title="Assinatura verificada"></i>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    messagesList.appendChild(messageDiv);
+    scrollToBottom();
+}
+
+// 4. Atualizar attachFile (substituir a função existente)
+function attachFile() {
+    const input = document.getElementById('fileInput');
+    input.accept = 'image/*,.pdf,.doc,.docx,.txt,.zip,.rar,.mp4,.mp3,.xlsx,.pptx';
+    input.click();
+}
+            
+            function showHelp() {
+                const modal = new bootstrap.Modal(document.getElementById('helpModal'));
+                modal.show();
+            }
+            
+            // Inicialização
+            document.addEventListener('DOMContentLoaded', function() {
+                connect();
+                document.getElementById('messageInput').focus();
+                
+                // Toast de boas-vindas atualizado
+                if (typeof bootstrap !== 'undefined') {
+                    const toast = new bootstrap.Toast(document.getElementById('welcomeToast'), {
+                        delay: 5000
+                    });
+                    toast.show();
+                }
+                
+                // Auto-scroll inicial
+                scrollToBottom();
+            });
+            
+            // Tratamento de desconexão (opcional)
+            window.addEventListener('beforeunload', function() {
+                if (stompClient) {
+                    stompClient.disconnect();
+                }
+            });
+            
+        </script>
+        
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        
+        <!-- SockJS e STOMP para WebSocket -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+        
+        <!-- Toast de Boas-Vindas (adicione no layout se não existir, ou aqui) -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div id="welcomeToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" style="background: rgba(0, 0, 0, 0.8); border: 1px solid rgba(255, 255, 255, 0.2);">
+                <div class="toast-header bg-primary text-white">
+                    <i class="bi bi-shield-lock me-2"></i>
+                    <strong class="me-auto">Chat Seguro Ativado</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body text-light">
+                    Conexão criptografada estabelecida! Use os botões DH e Testar Crypto para verificar segurança. Clique em mensagens para detalhes.
+                </div>
+            </div>
+        </div>
+    </th:block>
+</body>
+</html>
+                               
